@@ -72,13 +72,23 @@ void wczytaj_uzytkownikow(){
 	fclose(plik);
 }
 
-int zaloguj(){
-	FILE* plik=fopen("users.txt", "r");
+void czyszczenie(){
+    for (int i=0;i<1024;i++){
+        msg[i]='\0';
+    }
+}
+
+int zaloguj(int i){
+    char uzytkownik[20];
+    read(i,uzytkownik,20);
+    printf("%s",uzytkownik);
+	printf("\n");
+    FILE* plik=fopen("users.txt", "r");
 	char logowanie[40];
 	int sprawdzanie_czy_nie_EOF=fscanf(plik,"%s\n",logowanie);
 	int czy_zalogowany=0;
 	while (sprawdzanie_czy_nie_EOF!= EOF){
-	if (strcmp(msg,logowanie)==0){
+	if (strcmp(uzytkownik,logowanie)==0){
 		
 		czy_zalogowany=1;
         break;
@@ -88,7 +98,8 @@ int zaloguj(){
 	fclose(plik);
 	return czy_zalogowany;
 }
-//czy w tej lini jest uzytkownik zalogowany
+
+//czy w tej lini jest uzytkownik zalogowany(tzn pierwszy w lini)
 int czy_uzytkownik(char *p,char *uzytkownik){
     int c=0;
     int wynik=0;
@@ -198,6 +209,76 @@ int subskrybuj(int i){
 }
 
 
+int dodaj_wpis(int i){
+    char uzytkownik[20];
+    read(i,uzytkownik,20);
+    strcpy(msg,"mozesz dodac\n");
+    wysylanie(i);
+    //printf("%s\n",uzytkownik);
+    char *katalog;
+    char linia[100];
+    int czy=1;
+    FILE* plik1;
+    czyszczenie();
+    odczyt(i,'\n');
+
+    FILE* plik_suby=fopen("subskrybcje.txt","r");
+    while(czy!=0){
+        czy=czytaj_linie(plik_suby,linia);
+        if (czy_uzytkownik(linia,uzytkownik)){
+            break;
+        }
+    }
+    fclose(plik_suby);
+    //printf("%s",linia);
+    char *tmp=linia+strlen(uzytkownik)+1;
+    //printf("%s",linia);
+    //free(linia);
+
+    for (int i=0; i<users;i++){
+        if (strstr(tmp,uzytkownicy[i])){
+            //printf("%s\n", uzytkownicy[i]);
+            katalog=malloc(50*sizeof(char));
+            strcpy(katalog,"wpisy/");
+            strcat(katalog,uzytkownicy[i]);
+            plik1=fopen(katalog,"a");
+            fputs(uzytkownik,plik1);
+            fputs(msg,plik1);
+            //fputs("\n",plik1);
+            fclose(plik1);
+            free(katalog);
+        }
+    }
+    
+}
+
+int zarejestruj(int i){
+    czyszczenie();
+    strcpy(msg,"podaj login");
+    wysylanie(i);
+    char nowy_uzytkownik[20];
+    read(i,nowy_uzytkownik,20);
+
+    for(int i=0;i<users;i++){
+        if(strcmp(uzytkownicy[i],nowy_uzytkownik)==0){ return 0;}
+    }
+
+    FILE* plik1=fopen("subskrybcje.txt","a");
+    fputs(nowy_uzytkownik,plik1);
+    fclose(plik1);
+    plik1=fopen("users.txt","a");
+    fputs(nowy_uzytkownik,plik1);
+    fclose(plik1);
+    char katalog[30];
+    strcpy(katalog,"wpisy/");
+    strcat(katalog,nowy_uzytkownik);
+    plik1=fopen(katalog,"w");
+    fclose(plik1);
+    return 1;
+
+
+}
+
 int main(int argc, char **argv){
     socklen_t slt;
     int sfd, cfd, on = 1;
@@ -212,37 +293,60 @@ int main(int argc, char **argv){
     bind(sfd, (struct sockaddr*) &saddr, sizeof(saddr));
     listen(sfd, 10);
     wczytaj_uzytkownikow();
+   
     while(1){
+
         slt = sizeof(caddr);
         int n;
         cfd = accept(sfd, (struct sockaddr*)&caddr, &slt);
         printf("new connection: %s\n",
              inet_ntoa((struct in_addr)caddr.sin_addr));
         if (fork()==0){
-            write(cfd,"zaloguj sie\n",12);
-            while(read(cfd, msg, 256) == 0);
-
-	        int czy_zalogowany=zaloguj();
+            strcpy(msg,"1.zaloguj lub 2.zarejestruj\n");
+            wysylanie(cfd);
+            int czy_zalogowany;
+            czyszczenie();
+            odczyt(cfd,'\n');
+            printf("%s",msg);
+            if(msg[0]=='1'){
+	            czy_zalogowany=zaloguj(cfd);
                 if (czy_zalogowany){
-            	    write(cfd,"zalogowano\n",11);
+                    strcpy(msg,"zalogowano\n");
+            	    wysylanie(cfd);
                 }
                 else{
-            	    write(cfd,"nie zalogowano\n",15);
+            	    strcpy(msg,"nie zalogowano\n");
+                    wysylanie(cfd);
                 }
+            }
+            else if(msg[0]=='2'){
+                czy_zalogowany=zarejestruj(cfd);
+                if (czy_zalogowany){
+                    strcpy(msg,"zalogowano\n");
+            	    wysylanie(cfd);
+                }
+                else{
+            	    strcpy(msg,"nie zalogowano\n");
+                    wysylanie(cfd);
+                }
+            }  
+             
            
-           
+            czyszczenie();
 	        if(czy_zalogowany){   
-
-	        while(read(cfd, msg, 256) == 0);
-                if(strcmp("subskrybuj", msg) == 0){
+            
+	        while(odczyt(cfd, '\n') == 0);
+                printf("%s\n",msg);
+                if(strcmp("subskrybuj\n", msg) == 0){
                     int czy_dodano=subskrybuj(cfd);
                     if (czy_dodano>0){
                         write(cfd,"1", 1);
                     }
                     else{ write(cfd,"0",1);}
                 }
-                else if(strcmp(msg, "148216") == 0){
-                    write(cfd, "MF\n", 3);
+                else if(strcmp(msg, "dodaj\n") == 0){
+                    dodaj_wpis(cfd);
+                    
                 } else{
                     write(cfd, "ERROR\n", 6);
                 }
