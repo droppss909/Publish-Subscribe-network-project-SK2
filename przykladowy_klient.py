@@ -54,6 +54,13 @@ def dodaj_wpis(s,u):
 	wpis="-"+wpis+"\n"
 	s.send(wpis)
 
+def pokaz_wpisy(s,u):
+	s.send("wpisy\n")
+	time.sleep(1)
+	s.send(u)
+	resp=s.recv(1024)
+	print(resp)
+
 if __name__ == '__main__':
 	proto = socket.getprotobyname('tcp')                             # [1]
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, proto)
@@ -63,8 +70,10 @@ if __name__ == '__main__':
 	wybor=raw_input()
 	wybor=wybor+"\n"
 	
-	if wybor!='1\n' and wybor!='2\n':
+	while wybor!='1\n' and wybor!='2\n':
 		print("blad")
+		wybor=raw_input()
+		wybor+"\n"
 	else:
 		s.send(wybor)
 	if wybor=="1\n":
@@ -72,8 +81,19 @@ if __name__ == '__main__':
 	elif wybor=="2\n":
 		uzytkownik_zalogowany=rejestracja(s)
 
-	
-	time.sleep(1)
-	
-	#subskrypcja(s,uzytkownik_zalogowany)
-	dodaj_wpis(s,uzytkownik_zalogowany)
+	while(1):
+		print("wybierz polecenie")
+		print("1.dodaj subskrybcje")
+		print("2.dodaj wpis")
+		print("3.pokaz wpisy")
+		print("4.koniec")
+		wybor=raw_input()
+		if wybor=="1":
+			subskrypcja(s,uzytkownik_zalogowany)
+		elif wybor=="2":
+			dodaj_wpis(s,uzytkownik_zalogowany)
+		elif wybor=="3":
+			pokaz_wpisy(s,uzytkownik_zalogowany)
+		elif wybor=="4":
+			s.send("koniec\n")
+			break
