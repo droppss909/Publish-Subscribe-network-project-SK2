@@ -279,6 +279,46 @@ int zarejestruj(int i){
 
 }
 
+void odczytaj_wpisy(int x){
+    char uzytkownik[20];
+    read(x,uzytkownik,20);
+    char *katalog=malloc(50*sizeof(char));
+    strcpy(katalog,"wpisy/");
+    strcat(katalog,uzytkownik);
+    FILE *fd;
+    char len[400];        
+    int i;
+    int ch;
+    int count;
+    int g=0;
+    fd = fopen(katalog, "r");
+    fseek(fd, 0, SEEK_END);
+    while (ftell(fd) > 1 ){
+        fseek(fd, -2, SEEK_CUR);
+        if(ftell(fd) <= 2)
+             break;
+        ch =fgetc(fd);
+        count = 0;
+        while(ch != '\n'){
+            len[count++] = ch;
+            if(ftell(fd) < 2)
+                break;
+            fseek(fd, -2, SEEK_CUR);
+            ch =fgetc(fd);
+        }
+        for (i =count -1 ; i >= 0 && count > 0  ; i--){
+            msg[g++]=len[i];
+        }
+        msg[g++]='\n';
+    }
+    wysylanie(x);
+    fclose(fd);
+
+
+
+}
+
+
 int main(int argc, char **argv){
     socklen_t slt;
     int sfd, cfd, on = 1;
@@ -293,7 +333,7 @@ int main(int argc, char **argv){
     bind(sfd, (struct sockaddr*) &saddr, sizeof(saddr));
     listen(sfd, 10);
     wczytaj_uzytkownikow();
-   
+
     while(1){
 
         slt = sizeof(caddr);
@@ -333,9 +373,9 @@ int main(int argc, char **argv){
              
            
             czyszczenie();
-	        if(czy_zalogowany){   
+	        while(czy_zalogowany){   
             
-	        while(odczyt(cfd, '\n') == 0);
+	            while(odczyt(cfd, '\n') == 0);
                 printf("%s\n",msg);
                 if(strcmp("subskrybuj\n", msg) == 0){
                     int czy_dodano=subskrybuj(cfd);
@@ -347,10 +387,13 @@ int main(int argc, char **argv){
                 else if(strcmp(msg, "dodaj\n") == 0){
                     dodaj_wpis(cfd);
                     
-                } else{
-                    write(cfd, "ERROR\n", 6);
+                } else if(strcmp(msg,"wpisy\n")==0){
+                    odczytaj_wpisy(cfd);
                 }
+                else if(strcmp(msg,"koniec\n")==0){ break;}
+                czyszczenie();
             }
+            
         }
         close(cfd);
     }
