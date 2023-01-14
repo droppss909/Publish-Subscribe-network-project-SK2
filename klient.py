@@ -6,12 +6,11 @@ from tkinter.scrolledtext import ScrolledText
 current_username = ""
 
 
-def logowanie(s):
+def logowanie(s, uzytkownik):
     s.send('1'.encode())
-    uzytkownik = input()
     print('tu33')
-    s.send(uzytkownik.encode())
-    print('tu44')
+    s.send(uzytkownik.get().encode())
+    print(uzytkownik.get().encode())
     resp2 = s.recv(100)
     print('tu55')
     serverMessage.configure(state=NORMAL)
@@ -22,14 +21,13 @@ def logowanie(s):
     return uzytkownik;  # [5
 
 
-def rejestracja(s):
+def rejestracja(s, login):
     s.send('2'.encode())
     resp = s.recv(1024)
     serverMessage.configure(state=NORMAL)
     serverMessage.insert(INSERT, resp)
     serverMessage.configure(state=DISABLED)
-    login = input()
-    s.send(login.encode())
+    s.send(login.get().encode())
     resp = s.recv(1024)
     serverMessage.configure(state=NORMAL)
     serverMessage.insert(INSERT, resp)
@@ -37,15 +35,14 @@ def rejestracja(s):
     return login
 
 
-def subskrypcja(s, u):
+def subskrypcja(s, u, sub):
     s.send('subskrybuj\n'.encode())
     time.sleep(1)
 
     s.send(u.encode())
     # wiad=s.recv(100)
     print("prosze dodac")
-    sub = input()
-    s.send(sub.encode())
+    s.send(sub.get().encode())
     if_add = s.recv(10)
     print(if_add)
     if if_add == "1":
@@ -63,24 +60,24 @@ def subskrypcja(s, u):
     return 0
 
 
-def dodaj_wpis(s, u):
+def dodaj_wpis(s, u, wpis):
     s.send('dodaj\n'.encode())
     time.sleep(1)
 
     s.send(u.encode())
-    wpis = s.recv(20)
-    print(wpis)
-    print("podaj wpis")
-    wpis = input()
+    resp = s.recv(20)
+    serverMessage.configure(state=NORMAL)
+    serverMessage.insert(INSERT, resp)
+    serverMessage.configure(state=DISABLED)
     time.sleep(1)
-    wpis = "-" + wpis + "\n"
+    wpis = "-" + wpis.get() + "\n"
     s.send(wpis.encode())
 
 
 def pokaz_wpisy(s, u):
     s.send('wpisy\n'.encode())
     time.sleep(1)
-    s.send(u.encode())
+    s.send(u)
     resp = s.recv(1024)
     newsFeed.configure(state=NORMAL)
     newsFeed.insert(INSERT, resp)
@@ -112,7 +109,7 @@ if __name__ == '__main__':
     loggingBox.place(x=50, y=0)
 
     logInButton = Button(root, text='CONFIRM', width=10, height=1, bg='#90ee90',
-                         command=lambda: [logowanie(s), get_user(login)])
+                         command=lambda: [logowanie(s, login), get_user(login)])
     logInButton.place(x=70, y=25)
 
     registerLogin = StringVar()
@@ -125,7 +122,7 @@ if __name__ == '__main__':
     registerBox.place(x=370, y=0)
 
     registerButton = Button(root, text='CONFIRM', width=10, height=1, bg='#90ee90',
-                            command=lambda: [rejestracja(s), get_user(registerLogin)])
+                            command=lambda: [rejestracja(s, registerLogin), get_user(registerLogin)])
     registerButton.place(x=380, y=25)
 
     subscriptionUsername = StringVar()
@@ -138,7 +135,7 @@ if __name__ == '__main__':
     subscriptionBox.place(x=800, y=0)
 
     subscriptionButton = Button(root, text='CONFIRM', width=10, height=1, bg='#90ee90',
-                                command=lambda: subskrypcja(s, current_username))
+                                command=lambda: subskrypcja(s, current_username, subscriptionUsername))
     subscriptionButton.place(x=800, y=25)
 
     serverMessage = ScrolledText(root, width=80, height=13)
@@ -161,7 +158,7 @@ if __name__ == '__main__':
     messageBox.get(1.0, END)
 
     messageButton = Button(root, text='SEND', width=10, height=1, bg='#90ee90',
-                           command=lambda: dodaj_wpis(s, current_username))
+                           command=lambda: dodaj_wpis(s, current_username, message))
     messageButton.place(x=280, y=670)
 
     newsFeed = ScrolledText(root, width=70, height=34)
@@ -190,7 +187,7 @@ if __name__ == '__main__':
         wybor = input()
         wybor + "\n"
     else:
-        s.send(wybor.encode())
+        s.send(wybor)
     if wybor == "1\n":
         uzytkownik_zalogowany = logowanie(s)
     elif wybor == "2\n":
