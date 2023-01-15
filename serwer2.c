@@ -7,11 +7,14 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 
 char msg[1024];
 char uzytkownicy[30][15];
 int users=0;
+char blok[5];
+
 
 int odczyt(int i,char sep){
     int count = 0;
@@ -24,6 +27,17 @@ int odczyt(int i,char sep){
             count++;
     }
     return count;
+}
+void zamina_na_uzytkownik(char* u){
+    int i=0;
+    while (msg[i]!='\n'){
+        u[i]=msg[i];
+        i++;
+    }
+    while(i<20){
+        u[i]='\0';
+        i++;
+    }
 }
 void wysylanie(int i){
     int toSend = strlen(msg);
@@ -72,28 +86,72 @@ void wczytaj_uzytkownikow(){
 	fclose(plik);
 }
 
+int czy_jest_zasubo(char* linia, char* uzy){
+    int i=0;
+    int x=0;
+    int czy=0;
+    int best=0;
+    while(linia[i]!='\n' && i!=strlen(linia)){
+        
+        if(linia[i]==' '){
+            i++;
+            x=0;
+            if (czy==strlen(uzy)) return 1;
+            czy=0;
+        }
+        else if(x>strlen(uzy)) {
+            i++;
+            czy=0;
+        }
+        else if(linia[i]==uzy[x]){
+            czy++;
+            i++;
+            x++;
+        }
+        else{
+            i++;
+            x=0;
+            czy=0;
+        }
+    }
+    if (czy==strlen(uzy)) return 1;
+    return 0;
+    
+}
+
 void czyszczenie(){
     for (int i=0;i<1024;i++){
         msg[i]='\0';
     }
 }
+void czyszczenie2(char* b,int z){
+    for (int i=0;i<z;i++){
+        b[i]='\0';
+    }
+}
 
 int zaloguj(int i){
     char uzytkownik[20];
-    read(i,uzytkownik,20);
+    odczyt(i,'\n');
+    zamina_na_uzytkownik(uzytkownik);
     printf("%s",uzytkownik);
 	printf("\n");
     FILE* plik=fopen("users.txt", "r");
+
 	char logowanie[40];
+ 
 	int sprawdzanie_czy_nie_EOF=fscanf(plik,"%s\n",logowanie);
+
 	int czy_zalogowany=0;
+    int which=0;
 	while (sprawdzanie_czy_nie_EOF!= EOF){
-	if (strcmp(uzytkownik,logowanie)==0){
-		
+	if (strcmp(uzytkownik,logowanie)==0 ){
+
 		czy_zalogowany=1;
         break;
        }
        sprawdzanie_czy_nie_EOF=fscanf(plik,"%s",logowanie);
+       which++;
     }
 	fclose(plik);
 	return czy_zalogowany;
@@ -153,13 +211,24 @@ int subskrybuj(int i){
     char *t;
     char *linia_do_dodania;
     char nowa_subskrybcja[20];
-    read(i,uzytkownik,20);
-    while(read(i, nowa_subskrybcja, 20) == 0);
+    czyszczenie();
+    odczyt(i,'\n');
+    zamina_na_uzytkownik(uzytkownik);
+    printf("%s\n",uzytkownik);
+    strcpy(msg,"podaj subskrybcje\n");
+    wysylanie(i);
+    czyszczenie();
+    odczyt(i,'\n');
+    zamina_na_uzytkownik(nowa_subskrybcja);
+    printf("%s\n",nowa_subskrybcja);
     FILE* plik_s=fopen("sub.txt","w");
     fclose(plik_s);
     int check_user=0;
 
-    if(strcmp(uzytkownik,nowa_subskrybcja)==0){ return -2;}
+    if(strcmp(uzytkownik,nowa_subskrybcja)==0){ 
+
+        return -2;
+        }
     for (int i=0;i<users;i++){
         if (strcmp(uzytkownicy[i],nowa_subskrybcja)==0){
             check_user=1;
@@ -169,34 +238,35 @@ int subskrybuj(int i){
         return 0;
     }
 
-
+    linia_do_dodania=(char*)malloc(100*sizeof(char));
+    t=(char*)malloc(100*sizeof(char));
     FILE* plik2=fopen("subskrybcje.txt", "r");
     FILE* plik1=fopen("sub.txt","a");
-    linia_do_dodania=malloc(124*sizeof(char));
     int czy=1;
     while(czy!=0){
-        t=malloc(100*sizeof(char));
+
         
         czy=czytaj_linie(plik2,t);
-        printf("%s", t);
         if (czy_uzytkownik(t,uzytkownik)==1){
-            if(strstr(t,nowa_subskrybcja)){ 
+            if(czy_jest_zasubo(t,nowa_subskrybcja)){ 
+                printf("%s\n", t);
                 return -1;
              }
             strcpy(linia_do_dodania,t);
-            free(t);
+            czyszczenie2(t,100);
         }
         else{
             fputs(t,plik1);
             fputs("\n",plik1);
-            free(t);
+            czyszczenie2(t,100);
         }
     }
     //dodanie lini z nowa subskrybcja
     strcat(linia_do_dodania," ");
     strcat(linia_do_dodania,nowa_subskrybcja);
     fputs(linia_do_dodania,plik1);
-    free(linia_do_dodania);
+    
+
     fclose(plik1);
     fclose(plik2);
     //podmiana plik przy okazji usuwam puste linie bo nie wiem skad sie biora
@@ -204,7 +274,10 @@ int subskrybuj(int i){
     plik2=fopen("subskrybcje.txt","w");
     removeEmptyLines(plik1,plik2);
     fclose(plik1);
+
     fclose(plik2);
+    free(t);
+    free(linia_do_dodania);
     return 1;
 }
 
@@ -221,8 +294,9 @@ int dodaj_wpis(int i){
     FILE* plik1;
     czyszczenie();
     odczyt(i,'\n');
-
+    while(blok){}
     FILE* plik_suby=fopen("subskrybcje.txt","r");
+
     while(czy!=0){
         czy=czytaj_linie(plik_suby,linia);
         if (czy_uzytkownik(linia,uzytkownik)){
@@ -230,6 +304,7 @@ int dodaj_wpis(int i){
         }
     }
     fclose(plik_suby);
+
     //printf("%s",linia);
     char *tmp=linia+strlen(uzytkownik)+1;
     //printf("%s",linia);
@@ -374,15 +449,37 @@ int main(int argc, char **argv){
            
             czyszczenie();
 	        while(czy_zalogowany){   
-            
-	            while(odczyt(cfd, '\n') == 0);
+                
+	            odczyt(cfd, '\n') == 0;
                 printf("%s\n",msg);
+                // FILE* blok2=fopen("blok","r");
+                // czytaj_linie(blok2,blok);
+                // fclose(blok2);
+                // printf("%c",blok[0]);
+                // while (blok[0]=='1') {
+                //     sleep(1);
+                //     blok2=fopen("blok","r");
+                //     czytaj_linie(blok2,blok);
+                //     fclose(blok2);
+                // }
                 if(strcmp("subskrybuj\n", msg) == 0){
+                    // FILE* blok3=fopen("blok","w");
+                    // fputs("1",blok3);
+                    // fclose(blok3);
                     int czy_dodano=subskrybuj(cfd);
+                    // blok3=fopen("blok","w");
+                    // fputs("0",blok3);
+                    // fclose(blok3);
                     if (czy_dodano>0){
-                        write(cfd,"1", 1);
+                        czyszczenie();
+                        strcpy(msg,"1");
+                        wysylanie(cfd);
                     }
-                    else{ write(cfd,"0",1);}
+                    else{ 
+                        czyszczenie();
+                        strcpy(cfd,"0");
+                    }
+                    wysylanie(cfd);
                 }
                 else if(strcmp(msg, "dodaj\n") == 0){
                     dodaj_wpis(cfd);
@@ -390,10 +487,14 @@ int main(int argc, char **argv){
                 } else if(strcmp(msg,"wpisy\n")==0){
                     odczytaj_wpisy(cfd);
                 }
-                else if(strcmp(msg,"koniec\n")==0){ break;}
-                czyszczenie();
+                else if(strcmp(msg,"koniec\n")==0){ 
+                    czyszczenie();
+                    break;
+                    }
+
+                
             }
-            
+            czyszczenie();
         }
         close(cfd);
     }
