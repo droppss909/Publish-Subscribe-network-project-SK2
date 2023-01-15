@@ -1,3 +1,4 @@
+import atexit
 import socket
 import time
 from tkinter import *
@@ -6,87 +7,180 @@ from tkinter.scrolledtext import ScrolledText
 current_username = ""
 
 
-def logowanie(s, uzytkownik):
-    s.send('1'.encode())
-    print('tu33')
+def init_window(r):
+    r.geometry('1400x700')
+    r.title("Client")
+
+
+def login_ui(r, sm):
+    login = StringVar()
+
+    logging_label = Label(r, text='LOGIN')
+
+    logging_box = Entry(r, textvariable=login)
+
+    logging_label.place(x=0, y=0)
+    logging_box.place(x=50, y=0)
+
+    log_in_button = Button(r, text='CONFIRM', width=10, height=1, bg='#90ee90',
+                           command=lambda: [logowanie(s, login, sm), get_user(login)])
+    log_in_button.place(x=70, y=25)
+
+
+def register_ui(r, sm):
+    register_login = StringVar()
+
+    register_label = Label(r, text='REGISTER')
+
+    register_box = Entry(r, textvariable=register_login)
+
+    register_label.place(x=300, y=0)
+    register_box.place(x=370, y=0)
+
+    register_button = Button(r, text='CONFIRM', width=10, height=1, bg='#90ee90',
+                             command=lambda: [rejestracja(s, register_login, sm), get_user(register_login)])
+    register_button.place(x=380, y=25)
+
+
+def subscription_ui(r, sm):
+    subscription_username = StringVar()
+
+    subscription_label = Label(r, text='SUBSCRIBE')
+
+    subscription_box = Entry(r, textvariable=subscription_username)
+
+    subscription_label.place(x=700, y=0)
+    subscription_box.place(x=800, y=0)
+
+    subscription_button = Button(r, text='CONFIRM', width=10, height=1, bg='#90ee90',
+                                 command=lambda: subskrypcja(s, current_username, subscription_username, sm))
+    subscription_button.place(x=800, y=25)
+
+
+def server_message_ui(r):
+    server_message = ScrolledText(r, width=80, height=13)
+
+    server_message_label = Label(r, text='SERVER MESSAGE').place(x=0, y=59)
+
+    server_message.place(x=5, y=80)
+
+    server_message.configure(state=DISABLED)
+
+    return server_message
+
+
+def message_box_ui(r, sm):
+    message_label = Label(r, text='MESSAGE')
+
+    message_box = ScrolledText(r, width=80, height=19)
+
+    message_label.place(x=0, y=310)
+    message_box.place(x=5, y=330)
+
+    message_button = Button(r, text='SEND', width=10, height=1, bg='#90ee90',
+                            command=lambda: dodaj_wpis(s, current_username, message_box.get('1.0', 'end-1c'), sm))
+    message_button.place(x=280, y=670)
+
+
+def news_feed_ui(r):
+    news_feed = ScrolledText(r, width=70, height=34)
+
+    news_feed_abel = Label(r, text='NEWS FEED').place(x=700, y=59)
+
+    news_feed.place(x=700, y=80)
+
+    news_feed.configure(state=DISABLED)
+
+    news_feed_button = Button(r, text='UPDATE', width=10, height=1, bg='#90ee90',
+                              command=lambda: pokaz_wpisy(s, current_username, news_feed))
+    news_feed_button.place(x=950, y=670)
+
+
+def logowanie(s, uzytkownik, server_message):
+    s.send('1\n'.encode())
     s.send(uzytkownik.get().encode())
-    print(uzytkownik.get().encode())
     resp2 = s.recv(100)
-    print('tu55')
-    serverMessage.configure(state=NORMAL)
-    serverMessage.insert(INSERT, resp2)
-    serverMessage.configure(state=DISABLED)
-    if resp2 == "nie zalogowano\n":
-        exit();
-    return uzytkownik;  # [5
+    server_message.configure(state=NORMAL)
+    server_message.insert(INSERT, resp2)
+    server_message.configure(state=DISABLED)
+    if resp2 == b'nie zalogowano\n':
+        quit()
+    return uzytkownik  # [5
 
 
-def rejestracja(s, login):
-    s.send('2'.encode())
+def rejestracja(s, login, server_message):
+    s.send('2\n'.encode())
     resp = s.recv(1024)
-    serverMessage.configure(state=NORMAL)
-    serverMessage.insert(INSERT, resp)
-    serverMessage.configure(state=DISABLED)
+    server_message.configure(state=NORMAL)
+    server_message.insert(INSERT, resp)
+    server_message.configure(state=DISABLED)
     s.send(login.get().encode())
     resp = s.recv(1024)
-    serverMessage.configure(state=NORMAL)
-    serverMessage.insert(INSERT, resp)
-    serverMessage.configure(state=DISABLED)
+    server_message.configure(state=NORMAL)
+    server_message.insert(INSERT, resp)
+    server_message.configure(state=DISABLED)
     return login
 
 
-def subskrypcja(s, u, sub):
+def subskrypcja(s, u, sub, server_message):
     s.send('subskrybuj\n'.encode())
     time.sleep(1)
 
     s.send(u.encode())
     # wiad=s.recv(100)
-    print("prosze dodac")
     s.send(sub.get().encode())
     if_add = s.recv(10)
-    print(if_add)
-    if if_add == "1":
-        serverMessage.configure(state=NORMAL)
-        serverMessage.insert(INSERT, """\
+    server_message.configure(state=NORMAL)
+    server_message.insert(INSERT, if_add)
+    server_message.configure(state=DISABLED)
+    if if_add == b"1":
+        server_message.configure(state=NORMAL)
+        server_message.insert(INSERT, """\
         dodano pomyslnie
         """)
-        serverMessage.configure(state=DISABLED)
+        server_message.configure(state=DISABLED)
     else:
-        serverMessage.configure(state=NORMAL)
-        serverMessage.insert(INSERT, """\
+        server_message.configure(state=NORMAL)
+        server_message.insert(INSERT, """\
         nie dodano
         """)
-        serverMessage.configure(state=DISABLED)
-    return 0
+        server_message.configure(state=DISABLED)
 
 
-def dodaj_wpis(s, u, wpis):
+def dodaj_wpis(s, u, wpis, server_message):
     s.send('dodaj\n'.encode())
     time.sleep(1)
 
     s.send(u.encode())
     resp = s.recv(20)
-    serverMessage.configure(state=NORMAL)
-    serverMessage.insert(INSERT, resp)
-    serverMessage.configure(state=DISABLED)
+    server_message.configure(state=NORMAL)
+    server_message.insert(INSERT, resp)
+    server_message.configure(state=DISABLED)
     time.sleep(1)
-    wpis = "-" + wpis.get() + "\n"
+
+    wpis = "-" + wpis + "\n"
+
     s.send(wpis.encode())
 
 
-def pokaz_wpisy(s, u):
+def pokaz_wpisy(s, u, news_feed):
     s.send('wpisy\n'.encode())
     time.sleep(1)
-    s.send(u)
+    s.send(u.encode())
     resp = s.recv(1024)
-    newsFeed.configure(state=NORMAL)
-    newsFeed.insert(INSERT, resp)
-    newsFeed.configure(state=DISABLED)
+    news_feed.configure(state=NORMAL)
+    news_feed.delete('1.0', END)
+    news_feed.insert(INSERT, resp)
+    news_feed.configure(state=DISABLED)
 
 
 def get_user(username):
     global current_username
-    current_username = username
+    current_username = username.get()
+
+
+def exit_handler(soc):
+    soc.send("koniec\n".encode())
 
 
 if __name__ == '__main__':
@@ -96,119 +190,25 @@ if __name__ == '__main__':
     resp = s.recv(1024)
 
     root = Tk()
-    root.geometry('1400x700')
-    root.title("Client")
 
-    login = StringVar()
+    init_window(root)
 
-    loggingLabel = Label(root, text='LOGIN')
+    sm = server_message_ui(root)
 
-    loggingBox = Entry(root, textvariable=login)
+    login_ui(root, sm)
 
-    loggingLabel.place(x=0, y=0)
-    loggingBox.place(x=50, y=0)
+    register_ui(root, sm)
 
-    logInButton = Button(root, text='CONFIRM', width=10, height=1, bg='#90ee90',
-                         command=lambda: [logowanie(s, login), get_user(login)])
-    logInButton.place(x=70, y=25)
+    subscription_ui(root, sm)
 
-    registerLogin = StringVar()
+    message_box_ui(root, sm)
 
-    registerLabel = Label(root, text='REGISTER')
+    news_feed_ui(root)
 
-    registerBox = Entry(root, textvariable=registerLogin)
+    sm.configure(state=NORMAL)
+    sm.insert(INSERT, resp)
+    sm.configure(state=DISABLED)
 
-    registerLabel.place(x=300, y=0)
-    registerBox.place(x=370, y=0)
-
-    registerButton = Button(root, text='CONFIRM', width=10, height=1, bg='#90ee90',
-                            command=lambda: [rejestracja(s, registerLogin), get_user(registerLogin)])
-    registerButton.place(x=380, y=25)
-
-    subscriptionUsername = StringVar()
-
-    subscriptionLabel = Label(root, text='SUBSCRIBE')
-
-    subscriptionBox = Entry(root, textvariable=subscriptionUsername)
-
-    subscriptionLabel.place(x=700, y=0)
-    subscriptionBox.place(x=800, y=0)
-
-    subscriptionButton = Button(root, text='CONFIRM', width=10, height=1, bg='#90ee90',
-                                command=lambda: subskrypcja(s, current_username, subscriptionUsername))
-    subscriptionButton.place(x=800, y=25)
-
-    serverMessage = ScrolledText(root, width=80, height=13)
-
-    serverMessageLabel = Label(root, text='SERVER MESSAGE').place(x=0, y=59)
-
-    serverMessage.place(x=5, y=80)
-
-    serverMessage.configure(state=DISABLED)
-
-    message = StringVar()
-
-    messageLabel = Label(root, text='MESSAGE')
-
-    messageBox = ScrolledText(root, width=80, height=19)
-
-    messageLabel.place(x=0, y=310)
-    messageBox.place(x=5, y=330)
-
-    messageBox.get(1.0, END)
-
-    messageButton = Button(root, text='SEND', width=10, height=1, bg='#90ee90',
-                           command=lambda: dodaj_wpis(s, current_username, message))
-    messageButton.place(x=280, y=670)
-
-    newsFeed = ScrolledText(root, width=70, height=34)
-
-    newsFeedLabel = Label(root, text='NEWS FEED').place(x=700, y=59)
-
-    newsFeed.place(x=700, y=80)
-
-    newsFeed.configure(state=DISABLED)
-
-    newsFeedButton = Button(root, text='UPDATE', width=10, height=1, bg='#90ee90',
-                            command=lambda: pokaz_wpisy(s, current_username))
-    newsFeedButton.place(x=950, y=670)
-
-    serverMessage.configure(state=NORMAL)
-    serverMessage.insert(INSERT, resp)
-    serverMessage.configure(state=DISABLED)
-
-    '''
-    print(resp)
-    wybor = input()
-    wybor = wybor + "\n"
-
-    while wybor != '1\n' and wybor != '2\n':
-        print("blad")
-        wybor = input()
-        wybor + "\n"
-    else:
-        s.send(wybor)
-    if wybor == "1\n":
-        uzytkownik_zalogowany = logowanie(s)
-    elif wybor == "2\n":
-        uzytkownik_zalogowany = rejestracja(s)
-
-    while (1):
-        print("wybierz polecenie")
-        print("1.dodaj subskrybcje")
-        print("2.dodaj wpis")
-        print("3.pokaz wpisy")
-        print("4.koniec")
-        wybor = input()
-        if wybor == "1":
-            subskrypcja(s, uzytkownik_zalogowany)
-        elif wybor == "2":
-            dodaj_wpis(s, uzytkownik_zalogowany)
-        elif wybor == "3":
-            pokaz_wpisy(s, uzytkownik_zalogowany)
-        elif wybor == "4":
-            s.send("koniec\n")
-            break
-            '''
+    atexit.register(exit_handler, s)
 
     root.mainloop()
