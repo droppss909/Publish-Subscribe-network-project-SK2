@@ -12,7 +12,7 @@ def init_window(r):
     r.title("Client")
 
 
-def login_ui(r, sm):
+def login_ui(s, r, sm):
     login = StringVar()
 
     logging_label = Label(r, text='LOGIN')
@@ -27,7 +27,7 @@ def login_ui(r, sm):
     log_in_button.place(x=70, y=25)
 
 
-def register_ui(r, sm):
+def register_ui(s, r, sm):
     register_login = StringVar()
 
     register_label = Label(r, text='REGISTER')
@@ -42,7 +42,7 @@ def register_ui(r, sm):
     register_button.place(x=380, y=25)
 
 
-def subscription_ui(r, sm):
+def subscription_ui(s, r, sm):
     subscription_username = StringVar()
 
     subscription_label = Label(r, text='SUBSCRIBE')
@@ -53,8 +53,14 @@ def subscription_ui(r, sm):
     subscription_box.place(x=800, y=0)
 
     subscription_button = Button(r, text='CONFIRM', width=10, height=1, bg='#90ee90',
-                                 command=lambda: subskrypcja(s, current_username, subscription_username, sm))
+                                 command=lambda: subskrybcja(s, current_username, subscription_username, sm))
     subscription_button.place(x=800, y=25)
+
+
+def show_subscriptions_ui(s, r, sm):
+    subscription_button = Button(r, text='SHOW SUBSCRIPTIONS', width=20, height=1, bg='#90ee90',
+                                 command=lambda: show_subscriptions(s, current_username, sm))
+    subscription_button.place(x=1000, y=0)
 
 
 def server_message_ui(r):
@@ -69,7 +75,7 @@ def server_message_ui(r):
     return server_message
 
 
-def message_box_ui(r, sm):
+def message_box_ui(s, r, sm):
     message_label = Label(r, text='MESSAGE')
 
     message_box = ScrolledText(r, width=80, height=19)
@@ -82,7 +88,7 @@ def message_box_ui(r, sm):
     message_button.place(x=280, y=670)
 
 
-def news_feed_ui(r):
+def news_feed_ui(s, r):
     news_feed = ScrolledText(r, width=70, height=34)
 
     news_feed_abel = Label(r, text='NEWS FEED').place(x=700, y=59)
@@ -122,7 +128,7 @@ def rejestracja(s, login, server_message):
     return login
 
 
-def subskrypcja(s, u, sub, server_message):
+def subskrybcja(s, u, sub, server_message):
     s.send('subskrybuj\n'.encode())
     time.sleep(1)
 
@@ -145,6 +151,17 @@ def subskrypcja(s, u, sub, server_message):
         nie dodano
         """)
         server_message.configure(state=DISABLED)
+
+
+def show_subscriptions(s, u, server_message):
+    s.send('subs\n'.encode())
+    time.sleep(1)
+
+    s.send(u.encode())
+    resp = s.recv(1024)
+    server_message.configure(state=NORMAL)
+    server_message.insert(INSERT, resp)
+    server_message.configure(state=DISABLED)
 
 
 def dodaj_wpis(s, u, wpis, server_message):
@@ -195,15 +212,17 @@ if __name__ == '__main__':
 
     sm = server_message_ui(root)
 
-    login_ui(root, sm)
+    login_ui(s, root, sm)
 
-    register_ui(root, sm)
+    register_ui(s, root, sm)
 
-    subscription_ui(root, sm)
+    subscription_ui(s, root, sm)
 
-    message_box_ui(root, sm)
+    show_subscriptions_ui(s, root, sm)
 
-    news_feed_ui(root)
+    message_box_ui(s, root, sm)
+
+    news_feed_ui(s, root)
 
     sm.configure(state=NORMAL)
     sm.insert(INSERT, resp)
