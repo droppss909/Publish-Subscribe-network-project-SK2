@@ -15,7 +15,7 @@ char uzytkownicy[30][15];
 int users=0;
 char blok[5];
 
-
+//funkcja czytajaca z dyskryptora
 int odczyt(int i,char sep){
     int count = 0;
     while (1) {
@@ -28,6 +28,8 @@ int odczyt(int i,char sep){
     }
     return count;
 }
+
+//funkcja czytajaca z bufora do podanego stringa bez ostatniego znaku (wazne)
 void zamina_na_uzytkownik(char* u){
     int i=0;
     while (msg[i]!='\n'){
@@ -39,6 +41,7 @@ void zamina_na_uzytkownik(char* u){
         i++;
     }
 }
+//wysylanie wiadomosci sprawdza czy wszystko wyslane
 void wysylanie(int i){
     int toSend = strlen(msg);
     int dataCount = 0, w;
@@ -48,6 +51,7 @@ void wysylanie(int i){
     }
 
 }
+//czyta linie z pliku txt
 int czytaj_linie(FILE* plik,char *linia){
 
     char ch = getc(plik);
@@ -63,7 +67,7 @@ int czytaj_linie(FILE* plik,char *linia){
     
     return koniec;
 }
-
+//wczytuje uzytkownikow to tabeli uzytkownicy wazne przy logowaniu i rejsetracji
 void wczytaj_uzytkownikow(){
 	FILE* plik=fopen("users.txt","r");
 	char *buf;
@@ -85,7 +89,7 @@ void wczytaj_uzytkownikow(){
     //printf("%d",users);
 	fclose(plik);
 }
-
+//sprawdza czy uzytkownik jest juz zasubskrobawny funkcja strstr nie dawala satysfakcjonujacych wynikow
 int czy_jest_zasubo(char* linia, char* uzy){
     int i=0;
     int x=0;
@@ -118,12 +122,13 @@ int czy_jest_zasubo(char* linia, char* uzy){
     return 0;
     
 }
-
+//czysci bufor ze smieci
 void czyszczenie(){
     for (int i=0;i<1024;i++){
         msg[i]='\0';
     }
 }
+//czysci tablice ze smieci
 void czyszczenie2(char* b,int z){
     for (int i=0;i<z;i++){
         b[i]='\0';
@@ -174,6 +179,7 @@ int czy_uzytkownik(char *p,char *uzytkownik){
     if(c==strlen(uzytkownik)){ return 1;}
     else{return 0;}
 }
+//sprawdza czy linia w pliku jest pusta
 int isEmpty(const char *str)
 {
     char ch;
@@ -363,9 +369,11 @@ int zarejestruj(int i){
     }
 
     FILE* plik1=fopen("subskrybcje.txt","a");
+    fputs("\0",plik1);
     fputs(nowy_uzytkownik,plik1);
     fclose(plik1);
     plik1=fopen("users.txt","a");
+    fputs("\0",plik1);
     fputs(nowy_uzytkownik,plik1);
     fclose(plik1);
     char katalog[30];
@@ -416,6 +424,28 @@ void odczytaj_wpisy(int x){
 
 
 }
+
+
+void subs_to_user(int i){
+    char uzytkownik[20];
+    czyszczenie();
+    odczyt(i,'\n');
+    zamina_na_uzytkownik(uzytkownik);
+    czyszczenie();
+    FILE* plik2=fopen("subskrybcje.txt", "r");
+    int czy=1;
+    char* t=(char*)malloc(100*sizeof(char));
+    while(czy!=0){
+        czy=czytaj_linie(plik2,t);
+        if (czy_uzytkownik(t,uzytkownik)==1){
+            t=t+strlen(uzytkownik)+1;
+            break;
+        }
+    }
+    strcpy(msg,t);
+    wysylanie(i);
+}
+
 
 
 int main(int argc, char **argv){
@@ -469,13 +499,14 @@ int main(int argc, char **argv){
                     wysylanie(cfd);
                 }
             }  
-             
-           
+            
+            
+
             czyszczenie();
 	        while(czy_zalogowany){   
                 
 	            odczyt(cfd, '\n') == 0;
-                printf("%s\n",msg);
+                //printf("%s\n",msg);
                 
                 if(strcmp("subskrybuj\n", msg) == 0){
                     //blokowanie pisanie do tego samego pliku w tym samym momencie
@@ -507,14 +538,17 @@ int main(int argc, char **argv){
                 } else if(strcmp(msg,"wpisy\n")==0){
                     odczytaj_wpisy(cfd);
                 }
+                else if(strcmp(msg,"subs\n")==0){
+                    subs_to_user(cfd);
+                }
                 else if(strcmp(msg,"koniec\n")==0){ 
                     czyszczenie();
                     break;
-                    }
+                }
 
-                
+                czyszczenie();
             }
-            czyszczenie();
+
         }
         close(cfd);
     }
