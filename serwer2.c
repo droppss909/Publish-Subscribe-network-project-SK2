@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <unistd.h>
-
+#include <stdio.h>
 
 char msg[1024];
 char uzytkownicy[30][15];
@@ -59,9 +59,11 @@ int czytaj_linie(FILE* plik,char *linia){
     int koniec=0;
 
     while ((ch != '\n') && (ch != EOF)) {
+        
         linia[count] = ch;
         count++;
         ch = getc(plik);
+
         koniec++;
     }
     
@@ -94,9 +96,9 @@ int czy_jest_zasubo(char* linia, char* uzy){
     int i=0;
     int x=0;
     int czy=0;
-    int best=0;
-    while(linia[i]!='\n' && i!=strlen(linia)){
-        
+
+    while(linia[i]!='\n' && i<strlen(linia) && linia[i]!='\0'){
+        if (czy==strlen(uzy)) return 1;
         if(linia[i]==' '){
             i++;
             x=0;
@@ -162,12 +164,12 @@ int zaloguj(int i){
 	return czy_zalogowany;
 }
 
-//czy w tej lini jest uzytkownik zalogowany(tzn pierwszy w lini)
+//czy w tej lini jest uzytkownik zalogowany(tzn pierwszy)
 int czy_uzytkownik(char *p,char *uzytkownik){
     int c=0;
     int wynik=0;
 
-    while(p[c]!= ' ' && p[c]!='\0'){
+    while(p[c]!= ' ' && p[c]!='\0' && p[c]!='\n'){
         
         if(p[c]==uzytkownik[c]){
             c++;
@@ -314,47 +316,51 @@ int subskrybuj(int i){
 
 int dodaj_wpis(int i){
     char uzytkownik[20];
-    read(i,uzytkownik,20);
+    czyszczenie();
+    odczyt(i,'\n');
+    zamina_na_uzytkownik(uzytkownik);
     strcpy(msg,"mozesz dodac\n");
     wysylanie(i);
-    //printf("%s\n",uzytkownik);
+
+
     char *katalog;
     char linia[100];
     int czy=1;
     FILE* plik1;
     czyszczenie();
-    odczyt(i,'\n');
-    while(blok){}
+    while(msg[0]=='\0' || msg[0]=='\n'){
+        odczyt(i,'\n');
+    }
     FILE* plik_suby=fopen("subskrybcje.txt","r");
-
+    
     while(czy!=0){
+        czyszczenie2(linia,100);
         czy=czytaj_linie(plik_suby,linia);
+        printf("1-%s\n",linia);
         if (czy_uzytkownik(linia,uzytkownik)){
-            break;
+            NULL;
+        }
+        else if(czy_jest_zasubo(linia,uzytkownik)){
+            printf("2-%s\n",linia);
+            for(int c=0;c<users;c++){
+                
+                if(czy_uzytkownik(linia,uzytkownicy[c])){
+
+                    katalog=malloc(50*sizeof(char));
+                    strcpy(katalog,"wpisy/");
+                    strcat(katalog,uzytkownicy[c]);
+                    plik1=fopen(katalog,"a");
+                    fputs(uzytkownik,plik1);
+                    fputs(msg,plik1);
+                    //fputs("\n",plik1);
+                    fclose(plik1);
+                    free(katalog);
+                }
+            }
         }
     }
     fclose(plik_suby);
-
-    //printf("%s",linia);
-    char *tmp=linia+strlen(uzytkownik)+1;
-    //printf("%s",linia);
-    //free(linia);
-
-    for (int i=0; i<users;i++){
-        if (strstr(tmp,uzytkownicy[i])){
-            //printf("%s\n", uzytkownicy[i]);
-            katalog=malloc(50*sizeof(char));
-            strcpy(katalog,"wpisy/");
-            strcat(katalog,uzytkownicy[i]);
-            plik1=fopen(katalog,"a");
-            fputs(uzytkownik,plik1);
-            fputs(msg,plik1);
-            //fputs("\n",plik1);
-            fclose(plik1);
-            free(katalog);
-        }
-    }
-    
+    return 1;
 }
 
 int zarejestruj(int i){
@@ -362,18 +368,20 @@ int zarejestruj(int i){
     strcpy(msg,"podaj login");
     wysylanie(i);
     char nowy_uzytkownik[20];
-    read(i,nowy_uzytkownik,20);
+    czyszczenie();
+    odczyt(i,'\n');
+    zamina_na_uzytkownik(nowy_uzytkownik);
 
     for(int i=0;i<users;i++){
         if(strcmp(uzytkownicy[i],nowy_uzytkownik)==0){ return 0;}
     }
 
     FILE* plik1=fopen("subskrybcje.txt","a");
-    fputs("\0",plik1);
+    fputs("\n",plik1);
     fputs(nowy_uzytkownik,plik1);
     fclose(plik1);
     plik1=fopen("users.txt","a");
-    fputs("\0",plik1);
+    fputs("\n",plik1);
     fputs(nowy_uzytkownik,plik1);
     fclose(plik1);
     char katalog[30];
@@ -381,6 +389,23 @@ int zarejestruj(int i){
     strcat(katalog,nowy_uzytkownik);
     plik1=fopen(katalog,"w");
     fclose(plik1);
+    FILE* pliktmp=fopen("sub.txt","w");
+    plik1=fopen("users.txt","r");
+    removeEmptyLines(plik1,pliktmp);
+    fclose(plik1);
+    fclose(pliktmp);
+    remove("users.txt");
+    rename("sub.txt","users.txt");
+    pliktmp=fopen("sub.txt","w");
+    plik1=fopen("subskrybcje.txt","r");
+    removeEmptyLines(plik1,pliktmp);
+    fclose(plik1);
+    fclose(pliktmp);
+    remove("subskrybcje.txt");
+    rename("sub.txt","subskrybcje.txt");
+    pliktmp=fopen("sub.txt","w");
+    fclose(pliktmp);
+
     return 1;
 
 
@@ -388,7 +413,9 @@ int zarejestruj(int i){
 
 void odczytaj_wpisy(int x){
     char uzytkownik[20];
-    read(x,uzytkownik,20);
+    czyszczenie();
+    odczyt(x,'\n');
+    zamina_na_uzytkownik(uzytkownik);
     char *katalog=malloc(50*sizeof(char));
     strcpy(katalog,"wpisy/");
     strcat(katalog,uzytkownik);
@@ -477,6 +504,7 @@ int main(int argc, char **argv){
             czyszczenie();
             odczyt(cfd,'\n');
             printf("%s",msg);
+            wczytaj_uzytkownikow();
             if(msg[0]=='1'){
 	            czy_zalogowany=zaloguj(cfd);
                 if (czy_zalogowany){
@@ -533,7 +561,17 @@ int main(int argc, char **argv){
                     wysylanie(cfd);
                 }
                 else if(strcmp(msg, "dodaj\n") == 0){
-                    dodaj_wpis(cfd);
+                    
+                    int czy_dodano=dodaj_wpis(cfd);
+                    if (czy_dodano){
+                        czyszczenie();
+                        strcpy(msg,"dodano");
+                    }
+                    else{
+                        czyszczenie();
+                        strcpy(msg,"nie dodano");
+                    }
+                    wysylanie(cfd);
                     
                 } else if(strcmp(msg,"wpisy\n")==0){
                     odczytaj_wpisy(cfd);
@@ -545,7 +583,7 @@ int main(int argc, char **argv){
                     czyszczenie();
                     break;
                 }
-
+                wczytaj_uzytkownikow();
                 czyszczenie();
             }
 
