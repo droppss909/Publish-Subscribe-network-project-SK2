@@ -211,6 +211,8 @@ int subskrybuj(int i){
     char *t;
     char *linia_do_dodania;
     char nowa_subskrybcja[20];
+    
+
     czyszczenie();
     odczyt(i,'\n');
     zamina_na_uzytkownik(uzytkownik);
@@ -218,7 +220,9 @@ int subskrybuj(int i){
     strcpy(msg,"podaj subskrybcje\n");
     wysylanie(i);
     czyszczenie();
+    while(msg[0]=='\0' || msg[0]=='\n'){
     odczyt(i,'\n');
+    }
     zamina_na_uzytkownik(nowa_subskrybcja);
     printf("%s\n",nowa_subskrybcja);
     FILE* plik_s=fopen("sub.txt","w");
@@ -226,7 +230,7 @@ int subskrybuj(int i){
     int check_user=0;
 
     if(strcmp(uzytkownik,nowa_subskrybcja)==0){ 
-
+        
         return -2;
         }
     for (int i=0;i<users;i++){
@@ -235,11 +239,26 @@ int subskrybuj(int i){
         }
     }
     if (check_user==0){
+        
         return 0;
     }
-
+    //zainisjowanie lini jedna zapamietuje linie z pliku(t-zmienna pomocnicza) druga (linia_do_dodania) zapamietuje subskrybcje uzytkownika 
     linia_do_dodania=(char*)malloc(100*sizeof(char));
     t=(char*)malloc(100*sizeof(char));
+    //blokowanie pisanie do tego samego pliku w tym samym momencie
+    FILE* blok2=fopen("blok","r");
+    czytaj_linie(blok2,blok);
+    fclose(blok2);
+    //patrzymy czy jest ktos juz zablokowany                
+    while (blok[0]=='1') {
+        sleep(1);
+        blok2=fopen("blok","r");
+        czytaj_linie(blok2,blok);
+        fclose(blok2);
+    }
+    FILE* blok3=fopen("blok","w");
+    fputs("1",blok3);
+    fclose(blok3);
     FILE* plik2=fopen("subskrybcje.txt", "r");
     FILE* plik1=fopen("sub.txt","a");
     int czy=1;
@@ -249,7 +268,9 @@ int subskrybuj(int i){
         czy=czytaj_linie(plik2,t);
         if (czy_uzytkownik(t,uzytkownik)==1){
             if(czy_jest_zasubo(t,nowa_subskrybcja)){ 
-                printf("%s\n", t);
+                blok3=fopen("blok","w");
+                fputs("0",blok3);
+                fclose(blok3);
                 return -1;
              }
             strcpy(linia_do_dodania,t);
@@ -269,7 +290,7 @@ int subskrybuj(int i){
 
     fclose(plik1);
     fclose(plik2);
-    //podmiana plik przy okazji usuwam puste linie bo nie wiem skad sie biora
+    //podmiana plik przy okazji usuwam puste linie
     plik1=fopen("sub.txt","r");
     plik2=fopen("subskrybcje.txt","w");
     removeEmptyLines(plik1,plik2);
@@ -278,6 +299,9 @@ int subskrybuj(int i){
     fclose(plik2);
     free(t);
     free(linia_do_dodania);
+    blok3=fopen("blok","w");
+    fputs("0",blok3);
+    fclose(blok3);
     return 1;
 }
 
@@ -452,32 +476,28 @@ int main(int argc, char **argv){
                 
 	            odczyt(cfd, '\n') == 0;
                 printf("%s\n",msg);
-                // FILE* blok2=fopen("blok","r");
-                // czytaj_linie(blok2,blok);
-                // fclose(blok2);
-                // printf("%c",blok[0]);
-                // while (blok[0]=='1') {
-                //     sleep(1);
-                //     blok2=fopen("blok","r");
-                //     czytaj_linie(blok2,blok);
-                //     fclose(blok2);
-                // }
+                
                 if(strcmp("subskrybuj\n", msg) == 0){
-                    // FILE* blok3=fopen("blok","w");
-                    // fputs("1",blok3);
-                    // fclose(blok3);
+                    //blokowanie pisanie do tego samego pliku w tym samym momencie
+                    FILE* blok2=fopen("blok","r");
+                    czytaj_linie(blok2,blok);
+                    fclose(blok2);
+                    
+                    while (blok[0]=='1') {
+                        sleep(1);
+                        blok2=fopen("blok","r");
+                        czytaj_linie(blok2,blok);
+                        fclose(blok2);
+                    }
                     int czy_dodano=subskrybuj(cfd);
-                    // blok3=fopen("blok","w");
-                    // fputs("0",blok3);
-                    // fclose(blok3);
+                    
                     if (czy_dodano>0){
                         czyszczenie();
                         strcpy(msg,"1");
-                        wysylanie(cfd);
                     }
                     else{ 
                         czyszczenie();
-                        strcpy(cfd,"0");
+                        strcpy(msg,"0");
                     }
                     wysylanie(cfd);
                 }
