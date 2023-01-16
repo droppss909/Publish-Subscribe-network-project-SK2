@@ -6,35 +6,39 @@ import time
 
 def logowanie(s):                                
 	uzytkownik=raw_input()
-	
+	uzytkownik=uzytkownik+"\n"
 	s.send(uzytkownik)  
 	resp2=s.recv(100)
 	print(resp2)     
 	if resp2=="nie zalogowano\n":
-		exit();    
-	return uzytkownik;                           # [5
+
+		exit()
+	return uzytkownik                           # [5
         
 
 def rejestracja(s):
 	resp=s.recv(1024)
 	print(resp)
 	login=raw_input()
+	login=login+"\n"
 	s.send(login)
 	resp=s.recv(1024)
-	print(resp)
+	if resp=="nie zalogowano\n":
+
+		exit()
 	return login
 
 def subskrypcja(s,u):
 	s.send("subskrybuj\n")
 	time.sleep(1)
-	
+	u=u+"\n"
 	s.send(u)
-	#wiad=s.recv(100)
-	print("prosze dodac")
+	wiad=s.recv(100)
+	print(wiad)
 	sub=raw_input()
+	sub=sub+"\n"
 	s.send(sub)
 	if_add=s.recv(10)
-	print(if_add)
 	if if_add=="1":
 		print("dodano pomyslnie")
 	else:
@@ -44,7 +48,7 @@ def subskrypcja(s,u):
 def dodaj_wpis(s,u):
 	s.send("dodaj\n")
 	time.sleep(1)
-
+	u=u+"\n"
 	s.send(u)
 	wpis=s.recv(20)
 	print(wpis)
@@ -53,13 +57,24 @@ def dodaj_wpis(s,u):
 	time.sleep(1)
 	wpis="-"+wpis+"\n"
 	s.send(wpis)
+	resp=s.recv(30)
+	print(resp)
 
 def pokaz_wpisy(s,u):
 	s.send("wpisy\n")
 	time.sleep(1)
+	u=u+"\n"
 	s.send(u)
 	resp=s.recv(1024)
 	print(resp)
+
+def subs_to_user(s,u):
+	s.send("subs\n")
+	u=u+"\n"
+	s.send(u)
+	rec=s.recv(100)
+	rec.split()
+	print(rec)
 
 if __name__ == '__main__':
 	proto = socket.getprotobyname('tcp')                             # [1]
@@ -73,7 +88,7 @@ if __name__ == '__main__':
 	while wybor!='1\n' and wybor!='2\n':
 		print("blad")
 		wybor=raw_input()
-		wybor+"\n"
+		wybor+="\n"
 	else:
 		s.send(wybor)
 	if wybor=="1\n":
@@ -86,7 +101,8 @@ if __name__ == '__main__':
 		print("1.dodaj subskrybcje")
 		print("2.dodaj wpis")
 		print("3.pokaz wpisy")
-		print("4.koniec")
+		print("4.pokaz zasubskrybowanych")
+		print("5.koniec")
 		wybor=raw_input()
 		if wybor=="1":
 			subskrypcja(s,uzytkownik_zalogowany)
@@ -95,5 +111,7 @@ if __name__ == '__main__':
 		elif wybor=="3":
 			pokaz_wpisy(s,uzytkownik_zalogowany)
 		elif wybor=="4":
+			subs_to_user(s,uzytkownik_zalogowany)
+		elif wybor=="5":
 			s.send("koniec\n")
 			break
