@@ -2,12 +2,13 @@ import atexit
 import socket
 import time
 from tkinter import *
-from tkinter.scrolledtext import ScrolledText
 from tkinter import messagebox
+from tkinter.scrolledtext import ScrolledText
 
 current_username = ""
 
-def recv_data_onlyOne(client_socket):
+
+def recv_data_only_one(client_socket):
     data = ""
 
     while True:
@@ -16,6 +17,7 @@ def recv_data_onlyOne(client_socket):
             data += one_letter
         else:
             return data
+
 
 def init_window(r):
     r.geometry('1400x700')
@@ -123,7 +125,7 @@ def logowanie(soc, uzytkownik, server_message):
     soc.send('1\n'.encode())
     uzytkownik = uzytkownik.get() + '\n'
     soc.send(uzytkownik.encode())
-    resp2 = recv_data_onlyOne(soc)
+    resp2 = recv_data_only_one(soc)
     messagebox.showinfo("SERVER MESSAGE", resp2)
     server_message.configure(state=NORMAL)
     server_message.delete('1.0', END)
@@ -136,7 +138,7 @@ def rejestracja(soc, login, server_message):
     soc.send('2\n'.encode())
     login = login.get() + '\n'
     soc.send(login.encode())
-    response = recv_data_onlyOne(soc)
+    response = recv_data_only_one(soc)
     messagebox.showinfo("SERVER MESSAGE", response)
 
 
@@ -149,7 +151,7 @@ def subskrybcja(soc, u, sub, server_message):
 
     sub = sub.get() + '\n'
     soc.send(sub.encode())
-    if_add = recv_data_onlyOne(soc)
+    if_add = recv_data_only_one(soc)
     if if_add == b"1":
         server_message.configure(state=NORMAL)
         server_message.insert(INSERT, "dodano pomyslnie\n")
@@ -166,7 +168,7 @@ def show_subscriptions(soc, u, server_message):
 
     u = u + '\n'
     soc.send(u.encode())
-    response = recv_data_onlyOne(soc)
+    response = recv_data_only_one(soc)
     server_message.configure(state=NORMAL)
     server_message.insert(INSERT, response)
     server_message.configure(state=DISABLED)
@@ -191,7 +193,7 @@ def pokaz_wpisy(soc, u, news_feed):
 
     u = u + '\n'
     soc.send(u.encode())
-    response = recv_data_onlyOne(soc)
+    response = recv_data_only_one(soc)
     news_feed.configure(state=NORMAL)
     news_feed.delete('1.0', END)
     news_feed.insert(INSERT, response)
@@ -211,7 +213,7 @@ if __name__ == '__main__':
     proto = socket.getprotobyname('tcp')  # [1]
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, proto)
     s.connect(("127.0.0.1", 1234))
-    resp = recv_data_onlyOne(s)
+    resp = recv_data_only_one(s)
 
     root = Tk()
 
