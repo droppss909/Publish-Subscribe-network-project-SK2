@@ -13,7 +13,7 @@ def init_window(r):
     r.title("Client")
 
 
-def login_ui(soc, r):
+def login_ui(soc, r, server_message):
     login = StringVar()
 
     logging_label = Label(r, text='LOGIN')
@@ -24,7 +24,7 @@ def login_ui(soc, r):
     logging_box.place(x=50, y=0)
 
     log_in_button = Button(r, text='CONFIRM', width=10, height=1, bg='#90ee90',
-                           command=lambda: [logowanie(soc, login), get_user(login)])
+                           command=lambda: [logowanie(soc, login, server_message), get_user(login)])
     log_in_button.place(x=70, y=25)
 
 
@@ -110,12 +110,15 @@ def news_feed_ui(soc, r):
     news_feed_button.place(x=950, y=670)
 
 
-def logowanie(soc, uzytkownik):
+def logowanie(soc, uzytkownik, server_message):
     soc.send('1\n'.encode())
     uzytkownik = uzytkownik.get() + '\n'
     soc.send(uzytkownik.encode())
     resp2 = soc.recv(100)
     messagebox.showinfo("SERVER MESSAGE",  resp2)
+    server_message.configure(state=NORMAL)
+    server_message.delete('1.0', END)
+    server_message.configure(state=DISABLED)
     if resp2 == b'nie zalogowano\n':
         quit()
 
