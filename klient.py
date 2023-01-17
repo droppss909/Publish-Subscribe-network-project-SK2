@@ -115,7 +115,7 @@ def logowanie(soc, uzytkownik, server_message):
     uzytkownik = uzytkownik.get() + '\n'
     soc.send(uzytkownik.encode())
     resp2 = soc.recv(100)
-    messagebox.showinfo("SERVER MESSAGE",  resp2)
+    messagebox.showinfo("SERVER MESSAGE", resp2)
     server_message.configure(state=NORMAL)
     server_message.delete('1.0', END)
     server_message.configure(state=DISABLED)
@@ -125,14 +125,10 @@ def logowanie(soc, uzytkownik, server_message):
 
 def rejestracja(soc, login, server_message):
     soc.send('2\n'.encode())
-    response = soc.recv(1024)
-    server_message.configure(state=NORMAL)
-    server_message.insert(INSERT, response)
-    server_message.configure(state=DISABLED)
     login = login.get() + '\n'
     soc.send(login.encode())
     response = soc.recv(1024)
-    messagebox.showinfo("SERVER MESSAGE",  response)
+    messagebox.showinfo("SERVER MESSAGE", response)
 
 
 def subskrybcja(soc, u, sub, server_message):
