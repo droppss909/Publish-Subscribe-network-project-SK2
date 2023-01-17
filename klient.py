@@ -111,7 +111,8 @@ def news_feed_ui(soc, r):
 
 def logowanie(soc, uzytkownik, server_message):
     soc.send('1\n'.encode())
-    soc.send(uzytkownik.get().encode())
+    uzytkownik = uzytkownik.get() + '\n'
+    soc.send(uzytkownik.encode())
     resp2 = soc.recv(100)
     server_message.configure(state=NORMAL)
     server_message.insert(INSERT, resp2)
@@ -127,7 +128,8 @@ def rejestracja(soc, login, server_message):
     server_message.configure(state=NORMAL)
     server_message.insert(INSERT, response)
     server_message.configure(state=DISABLED)
-    soc.send(login.get().encode())
+    login = login.get() + '\n'
+    soc.send(login.encode())
     response = soc.recv(1024)
     server_message.configure(state=NORMAL)
     server_message.insert(INSERT, response)
@@ -139,9 +141,11 @@ def subskrybcja(soc, u, sub, server_message):
     soc.send('subskrybuj\n'.encode())
     time.sleep(1)
 
+    u = u + '\n'
     soc.send(u.encode())
-    # wiad=soc.recv(100)
-    soc.send(sub.get().encode())
+
+    sub = sub.get() + '\n'
+    soc.send(sub.encode())
     if_add = soc.recv(10)
     server_message.configure(state=NORMAL)
     server_message.insert(INSERT, if_add)
@@ -164,6 +168,7 @@ def show_subscriptions(soc, u, server_message):
     soc.send('subs\n'.encode())
     time.sleep(1)
 
+    u = u + '\n'
     soc.send(u.encode())
     response = soc.recv(1024)
     server_message.configure(state=NORMAL)
@@ -175,6 +180,7 @@ def dodaj_wpis(soc, u, wpis, server_message):
     soc.send('dodaj\n'.encode())
     time.sleep(1)
 
+    u = u + '\n'
     soc.send(u.encode())
     response = soc.recv(20)
     server_message.configure(state=NORMAL)
@@ -190,6 +196,8 @@ def dodaj_wpis(soc, u, wpis, server_message):
 def pokaz_wpisy(soc, u, news_feed):
     soc.send('wpisy\n'.encode())
     time.sleep(1)
+
+    u = u + '\n'
     soc.send(u.encode())
     response = soc.recv(1024)
     news_feed.configure(state=NORMAL)
