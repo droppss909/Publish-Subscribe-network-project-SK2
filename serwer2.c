@@ -98,7 +98,11 @@ int czy_jest_zasubo(char* linia, char* uzy){
     int czy=0;
 
     while(linia[i]!='\n' && i<strlen(linia) && linia[i]!='\0'){
-        if (czy==strlen(uzy)) return 1;
+        if (czy==strlen(uzy) && (linia[i]==' ' || linia[i]=='\n')) return 1;
+        else if (czy==strlen(uzy)){
+            czy=0;
+            i++;
+        }
         if(linia[i]==' '){
             i++;
             x=0;
@@ -225,7 +229,8 @@ int subskrybuj(int i){
     odczyt(i,'\n');
     zamina_na_uzytkownik(uzytkownik);
     printf("%s\n",uzytkownik);
-    strcpy(msg,"podaj subskrybcje\n");
+    strcpy(msg,"Kogo chcesz zasubskrybowac\n");
+    
     wysylanie(i);
     czyszczenie();
     while(msg[0]=='\0' || msg[0]=='\n'){
@@ -272,13 +277,14 @@ int subskrybuj(int i){
     int czy=1;
     while(czy!=0){
 
-        
+        czyszczenie2(t,100);
         czy=czytaj_linie(plik2,t);
         if (czy_uzytkownik(t,uzytkownik)==1){
             if(czy_jest_zasubo(t,nowa_subskrybcja)){ 
                 blok3=fopen("blok","w");
                 fputs("0",blok3);
                 fclose(blok3);
+                printf("%s\n",t);
                 return -1;
              }
             strcpy(linia_do_dodania,t);
@@ -364,9 +370,9 @@ int dodaj_wpis(int i){
 }
 
 int zarejestruj(int i){
-    czyszczenie();
-    strcpy(msg,"podaj login");
-    wysylanie(i);
+    // czyszczenie();
+    // strcpy(msg,"podaj login");
+    // wysylanie(i);
     char nowy_uzytkownik[20];
     czyszczenie();
     odczyt(i,'\n');
@@ -463,6 +469,7 @@ void subs_to_user(int i){
     int czy=1;
     char* t=(char*)malloc(100*sizeof(char));
     while(czy!=0){
+        czyszczenie2(t,100);
         czy=czytaj_linie(plik2,t);
         if (czy_uzytkownik(t,uzytkownik)==1){
             t=t+strlen(uzytkownik)+1;
@@ -498,7 +505,7 @@ int main(int argc, char **argv){
         printf("new connection: %s\n",
              inet_ntoa((struct in_addr)caddr.sin_addr));
         if (fork()==0){
-            strcpy(msg,"1.zaloguj lub 2.zarejestruj\n");
+            strcpy(msg,"zaloguj lub zarejstruj jesli nie masz konta\n");
             wysylanie(cfd);
             int czy_zalogowany;
             czyszczenie();
