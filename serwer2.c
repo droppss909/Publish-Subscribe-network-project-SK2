@@ -334,6 +334,7 @@ int dodaj_wpis(int i){
     while(msg[0]=='\0' || msg[0]=='\n'){
         odczyt(i,'\n');
     }
+
     FILE* plik_suby=fopen("subskrybcje.txt","r");
     
     while(czy!=0){
@@ -556,11 +557,11 @@ int main(int argc, char **argv){
                     
                     if (czy_dodano>0){
                         czyszczenie();
-                        strcpy(msg,"1");
+                        strcpy(msg,"1\n");
                     }
                     else{ 
                         czyszczenie();
-                        strcpy(msg,"0");
+                        strcpy(msg,"0\n");
                     }
                     wysylanie(cfd);
                 }
@@ -569,11 +570,11 @@ int main(int argc, char **argv){
                     int czy_dodano=dodaj_wpis(cfd);
                     if (czy_dodano){
                         czyszczenie();
-                        strcpy(msg,"dodano");
+                        strcpy(msg,"dodano\n");
                     }
                     else{
                         czyszczenie();
-                        strcpy(msg,"nie dodano");
+                        strcpy(msg,"nie dodano\n");
                     }
                     wysylanie(cfd);
                     
