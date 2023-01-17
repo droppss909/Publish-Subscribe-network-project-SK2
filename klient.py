@@ -3,6 +3,7 @@ import socket
 import time
 from tkinter import *
 from tkinter.scrolledtext import ScrolledText
+from tkinter import messagebox
 
 current_username = ""
 
@@ -12,7 +13,7 @@ def init_window(r):
     r.title("Client")
 
 
-def login_ui(soc, r, server_message):
+def login_ui(soc, r):
     login = StringVar()
 
     logging_label = Label(r, text='LOGIN')
@@ -23,7 +24,7 @@ def login_ui(soc, r, server_message):
     logging_box.place(x=50, y=0)
 
     log_in_button = Button(r, text='CONFIRM', width=10, height=1, bg='#90ee90',
-                           command=lambda: [logowanie(soc, login, server_message), get_user(login)])
+                           command=lambda: [logowanie(soc, login), get_user(login)])
     log_in_button.place(x=70, y=25)
 
 
@@ -109,14 +110,12 @@ def news_feed_ui(soc, r):
     news_feed_button.place(x=950, y=670)
 
 
-def logowanie(soc, uzytkownik, server_message):
+def logowanie(soc, uzytkownik):
     soc.send('1\n'.encode())
     uzytkownik = uzytkownik.get() + '\n'
     soc.send(uzytkownik.encode())
     resp2 = soc.recv(100)
-    server_message.configure(state=NORMAL)
-    server_message.insert(INSERT, resp2)
-    server_message.configure(state=DISABLED)
+    messagebox.showinfo("SERVER MESSAGE",  resp2)
     if resp2 == b'nie zalogowano\n':
         quit()
 
@@ -130,9 +129,7 @@ def rejestracja(soc, login, server_message):
     login = login.get() + '\n'
     soc.send(login.encode())
     response = soc.recv(1024)
-    server_message.configure(state=NORMAL)
-    server_message.insert(INSERT, response)
-    server_message.configure(state=DISABLED)
+    messagebox.showinfo("SERVER MESSAGE",  response)
 
 
 def subskrybcja(soc, u, sub, server_message):
