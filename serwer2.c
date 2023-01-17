@@ -229,9 +229,7 @@ int subskrybuj(int i){
     odczyt(i,'\n');
     zamina_na_uzytkownik(uzytkownik);
     printf("%s\n",uzytkownik);
-    strcpy(msg,"Kogo chcesz zasubskrybowac\n");
     
-    wysylanie(i);
     czyszczenie();
     while(msg[0]=='\0' || msg[0]=='\n'){
     odczyt(i,'\n');
@@ -325,8 +323,7 @@ int dodaj_wpis(int i){
     czyszczenie();
     odczyt(i,'\n');
     zamina_na_uzytkownik(uzytkownik);
-    strcpy(msg,"mozesz dodac\n");
-    wysylanie(i);
+    
 
 
     char *katalog;
