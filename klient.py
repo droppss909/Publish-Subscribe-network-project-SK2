@@ -12,7 +12,7 @@ def init_window(r):
     r.title("Client")
 
 
-def login_ui(s, r, sm):
+def login_ui(soc, r, server_message):
     login = StringVar()
 
     logging_label = Label(r, text='LOGIN')
@@ -23,11 +23,11 @@ def login_ui(s, r, sm):
     logging_box.place(x=50, y=0)
 
     log_in_button = Button(r, text='CONFIRM', width=10, height=1, bg='#90ee90',
-                           command=lambda: [logowanie(s, login, sm), get_user(login)])
+                           command=lambda: [logowanie(soc, login, server_message), get_user(login)])
     log_in_button.place(x=70, y=25)
 
 
-def register_ui(s, r, sm):
+def register_ui(soc, r, server_message):
     register_login = StringVar()
 
     register_label = Label(r, text='REGISTER')
@@ -38,11 +38,12 @@ def register_ui(s, r, sm):
     register_box.place(x=370, y=0)
 
     register_button = Button(r, text='CONFIRM', width=10, height=1, bg='#90ee90',
-                             command=lambda: [rejestracja(s, register_login, sm), get_user(register_login)])
+                             command=lambda: [rejestracja(soc, register_login, server_message),
+                                              get_user(register_login)])
     register_button.place(x=380, y=25)
 
 
-def subscription_ui(s, r, sm):
+def subscription_ui(soc, r, server_message):
     subscription_username = StringVar()
 
     subscription_label = Label(r, text='SUBSCRIBE')
@@ -53,29 +54,32 @@ def subscription_ui(s, r, sm):
     subscription_box.place(x=800, y=0)
 
     subscription_button = Button(r, text='CONFIRM', width=10, height=1, bg='#90ee90',
-                                 command=lambda: subskrybcja(s, current_username, subscription_username, sm))
+                                 command=lambda: subskrybcja(soc, current_username, subscription_username,
+                                                             server_message))
     subscription_button.place(x=800, y=25)
 
 
-def show_subscriptions_ui(s, r, sm):
+def show_subscriptions_ui(soc, r, server_message):
     subscription_button = Button(r, text='SHOW SUBSCRIPTIONS', width=20, height=1, bg='#90ee90',
-                                 command=lambda: show_subscriptions(s, current_username, sm))
+                                 command=lambda: show_subscriptions(soc, current_username, server_message))
     subscription_button.place(x=1000, y=0)
 
 
 def server_message_ui(r):
     server_message = ScrolledText(r, width=80, height=13)
 
-    server_message_label = Label(r, text='SERVER MESSAGE').place(x=0, y=59)
+    server_message_label = Label(r, text='SERVER MESSAGE')
 
     server_message.place(x=5, y=80)
+
+    server_message_label.place(x=0, y=59)
 
     server_message.configure(state=DISABLED)
 
     return server_message
 
 
-def message_box_ui(s, r, sm):
+def message_box_ui(soc, r, server_message):
     message_label = Label(r, text='MESSAGE')
 
     message_box = ScrolledText(r, width=80, height=19)
@@ -84,28 +88,31 @@ def message_box_ui(s, r, sm):
     message_box.place(x=5, y=330)
 
     message_button = Button(r, text='SEND', width=10, height=1, bg='#90ee90',
-                            command=lambda: dodaj_wpis(s, current_username, message_box.get('1.0', 'end-1c'), sm))
+                            command=lambda: dodaj_wpis(soc, current_username, message_box.get('1.0', 'end-1c'),
+                                                       server_message))
     message_button.place(x=280, y=670)
 
 
-def news_feed_ui(s, r):
+def news_feed_ui(soc, r):
     news_feed = ScrolledText(r, width=70, height=34)
 
-    news_feed_abel = Label(r, text='NEWS FEED').place(x=700, y=59)
+    news_feed_abel = Label(r, text='NEWS FEED')
 
     news_feed.place(x=700, y=80)
+
+    news_feed_abel.place(x=700, y=59)
 
     news_feed.configure(state=DISABLED)
 
     news_feed_button = Button(r, text='UPDATE', width=10, height=1, bg='#90ee90',
-                              command=lambda: pokaz_wpisy(s, current_username, news_feed))
+                              command=lambda: pokaz_wpisy(soc, current_username, news_feed))
     news_feed_button.place(x=950, y=670)
 
 
-def logowanie(s, uzytkownik, server_message):
-    s.send('1\n'.encode())
-    s.send(uzytkownik.get().encode())
-    resp2 = s.recv(100)
+def logowanie(soc, uzytkownik, server_message):
+    soc.send('1\n'.encode())
+    soc.send(uzytkownik.get().encode())
+    resp2 = soc.recv(100)
     server_message.configure(state=NORMAL)
     server_message.insert(INSERT, resp2)
     server_message.configure(state=DISABLED)
@@ -114,28 +121,28 @@ def logowanie(s, uzytkownik, server_message):
     return uzytkownik  # [5
 
 
-def rejestracja(s, login, server_message):
-    s.send('2\n'.encode())
-    resp = s.recv(1024)
+def rejestracja(soc, login, server_message):
+    soc.send('2\n'.encode())
+    response = soc.recv(1024)
     server_message.configure(state=NORMAL)
-    server_message.insert(INSERT, resp)
+    server_message.insert(INSERT, response)
     server_message.configure(state=DISABLED)
-    s.send(login.get().encode())
-    resp = s.recv(1024)
+    soc.send(login.get().encode())
+    response = soc.recv(1024)
     server_message.configure(state=NORMAL)
-    server_message.insert(INSERT, resp)
+    server_message.insert(INSERT, response)
     server_message.configure(state=DISABLED)
     return login
 
 
-def subskrybcja(s, u, sub, server_message):
-    s.send('subskrybuj\n'.encode())
+def subskrybcja(soc, u, sub, server_message):
+    soc.send('subskrybuj\n'.encode())
     time.sleep(1)
 
-    s.send(u.encode())
-    # wiad=s.recv(100)
-    s.send(sub.get().encode())
-    if_add = s.recv(10)
+    soc.send(u.encode())
+    # wiad=soc.recv(100)
+    soc.send(sub.get().encode())
+    if_add = soc.recv(10)
     server_message.configure(state=NORMAL)
     server_message.insert(INSERT, if_add)
     server_message.configure(state=DISABLED)
@@ -153,41 +160,41 @@ def subskrybcja(s, u, sub, server_message):
         server_message.configure(state=DISABLED)
 
 
-def show_subscriptions(s, u, server_message):
-    s.send('subs\n'.encode())
+def show_subscriptions(soc, u, server_message):
+    soc.send('subs\n'.encode())
     time.sleep(1)
 
-    s.send(u.encode())
-    resp = s.recv(1024)
+    soc.send(u.encode())
+    response = soc.recv(1024)
     server_message.configure(state=NORMAL)
-    server_message.insert(INSERT, resp)
+    server_message.insert(INSERT, response)
     server_message.configure(state=DISABLED)
 
 
-def dodaj_wpis(s, u, wpis, server_message):
-    s.send('dodaj\n'.encode())
+def dodaj_wpis(soc, u, wpis, server_message):
+    soc.send('dodaj\n'.encode())
     time.sleep(1)
 
-    s.send(u.encode())
-    resp = s.recv(20)
+    soc.send(u.encode())
+    response = soc.recv(20)
     server_message.configure(state=NORMAL)
-    server_message.insert(INSERT, resp)
+    server_message.insert(INSERT, response)
     server_message.configure(state=DISABLED)
     time.sleep(1)
 
     wpis = "-" + wpis + "\n"
 
-    s.send(wpis.encode())
+    soc.send(wpis.encode())
 
 
-def pokaz_wpisy(s, u, news_feed):
-    s.send('wpisy\n'.encode())
+def pokaz_wpisy(soc, u, news_feed):
+    soc.send('wpisy\n'.encode())
     time.sleep(1)
-    s.send(u.encode())
-    resp = s.recv(1024)
+    soc.send(u.encode())
+    response = soc.recv(1024)
     news_feed.configure(state=NORMAL)
     news_feed.delete('1.0', END)
-    news_feed.insert(INSERT, resp)
+    news_feed.insert(INSERT, response)
     news_feed.configure(state=DISABLED)
 
 
@@ -204,7 +211,7 @@ if __name__ == '__main__':
     proto = socket.getprotobyname('tcp')  # [1]
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, proto)
     s.connect(("127.0.0.1", 1234))
-    resp = s.recv(1024)
+    resp = s.recv(1024).decode()
 
     root = Tk()
 
