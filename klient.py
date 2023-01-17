@@ -7,6 +7,15 @@ from tkinter import messagebox
 
 current_username = ""
 
+def recv_data_onlyOne(client_socket):
+    data = ""
+
+    while True:
+        one_letter = client_socket.recv(1).decode()
+        if one_letter != "\n":
+            data += one_letter
+        else:
+            return data
 
 def init_window(r):
     r.geometry('1400x700')
@@ -114,7 +123,7 @@ def logowanie(soc, uzytkownik, server_message):
     soc.send('1\n'.encode())
     uzytkownik = uzytkownik.get() + '\n'
     soc.send(uzytkownik.encode())
-    resp2 = soc.recv(100)
+    resp2 = recv_data_onlyOne(soc)
     messagebox.showinfo("SERVER MESSAGE", resp2)
     server_message.configure(state=NORMAL)
     server_message.delete('1.0', END)
@@ -127,7 +136,7 @@ def rejestracja(soc, login, server_message):
     soc.send('2\n'.encode())
     login = login.get() + '\n'
     soc.send(login.encode())
-    response = soc.recv(1024)
+    response = recv_data_onlyOne(soc)
     messagebox.showinfo("SERVER MESSAGE", response)
 
 
@@ -140,21 +149,14 @@ def subskrybcja(soc, u, sub, server_message):
 
     sub = sub.get() + '\n'
     soc.send(sub.encode())
-    if_add = soc.recv(10)
-    server_message.configure(state=NORMAL)
-    server_message.insert(INSERT, if_add)
-    server_message.configure(state=DISABLED)
+    if_add = recv_data_onlyOne(soc)
     if if_add == b"1":
         server_message.configure(state=NORMAL)
-        server_message.insert(INSERT, """\
-        dodano pomyslnie
-        """)
+        server_message.insert(INSERT, "dodano pomyslnie\n")
         server_message.configure(state=DISABLED)
     else:
         server_message.configure(state=NORMAL)
-        server_message.insert(INSERT, """\
-        nie dodano
-        """)
+        server_message.insert(INSERT, "nie dodano\n")
         server_message.configure(state=DISABLED)
 
 
@@ -164,7 +166,7 @@ def show_subscriptions(soc, u, server_message):
 
     u = u + '\n'
     soc.send(u.encode())
-    response = soc.recv(1024)
+    response = recv_data_onlyOne(soc)
     server_message.configure(state=NORMAL)
     server_message.insert(INSERT, response)
     server_message.configure(state=DISABLED)
@@ -176,10 +178,6 @@ def dodaj_wpis(soc, u, wpis, server_message):
 
     u = u + '\n'
     soc.send(u.encode())
-    response = soc.recv(20)
-    server_message.configure(state=NORMAL)
-    server_message.insert(INSERT, response)
-    server_message.configure(state=DISABLED)
     time.sleep(1)
 
     wpis = "-" + wpis + "\n"
@@ -193,7 +191,7 @@ def pokaz_wpisy(soc, u, news_feed):
 
     u = u + '\n'
     soc.send(u.encode())
-    response = soc.recv(1024)
+    response = recv_data_onlyOne(soc)
     news_feed.configure(state=NORMAL)
     news_feed.delete('1.0', END)
     news_feed.insert(INSERT, response)
@@ -213,7 +211,7 @@ if __name__ == '__main__':
     proto = socket.getprotobyname('tcp')  # [1]
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, proto)
     s.connect(("127.0.0.1", 1234))
-    resp = s.recv(1024).decode()
+    resp = recv_data_onlyOne(s)
 
     root = Tk()
 
