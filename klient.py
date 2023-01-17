@@ -19,6 +19,17 @@ def recv_data_only_one(client_socket):
             return data
 
 
+def recv_data_messages(client_socket, len_serv):
+    data = ""
+
+    while True:
+        one_letter = client_socket.recv(1).decode()
+        if len(data) < len_serv:
+            data += one_letter
+        else:
+            return data
+
+
 def init_window(r):
     r.geometry('1400x700')
     r.title("Client")
@@ -193,7 +204,8 @@ def pokaz_wpisy(soc, u, news_feed):
 
     u = u + '\n'
     soc.send(u.encode())
-    response = recv_data_only_one(soc)
+    amount = recv_data_only_one(soc)
+    response = recv_data_messages(soc, int(amount))
     news_feed.configure(state=NORMAL)
     news_feed.delete('1.0', END)
     news_feed.insert(INSERT, response)
