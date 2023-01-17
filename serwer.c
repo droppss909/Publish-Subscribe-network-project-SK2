@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <stdio.h>
 
+
 char msg[1024];
 char uzytkownicy[30][15];
 int users=0;
@@ -430,6 +431,7 @@ void odczytaj_wpisy(int x){
     int count;
     int g=0;
     fd = fopen(katalog, "r");
+    char* wiadomosc=(char*)malloc(1024*sizeof(char));
     fseek(fd, 0, SEEK_END);
     while (ftell(fd) > 1 ){
         fseek(fd, -2, SEEK_CUR);
@@ -445,12 +447,19 @@ void odczytaj_wpisy(int x){
             ch =fgetc(fd);
         }
         for (i =count -1 ; i >= 0 && count > 0  ; i--){
-            msg[g++]=len[i];
+            wiadomosc[g++]=len[i];
         }
-        msg[g++]='\n';
+        wiadomosc[g++]='\n';
     }
+    
+    sprintf(msg,"%ld",strlen(wiadomosc)-1);
+    printf("%s\n",msg);
+    strcat(msg,"\n");
     wysylanie(x);
     fclose(fd);
+    czyszczenie();
+    strcpy(msg,wiadomosc);
+    wysylanie(x);
 
 
 
@@ -462,7 +471,8 @@ void subs_to_user(int i){
     czyszczenie();
     odczyt(i,'\n');
     zamina_na_uzytkownik(uzytkownik);
-    czyszczenie();
+    printf("%s\n",uzytkownik);
+    
     FILE* plik2=fopen("subskrybcje.txt", "r");
     int czy=1;
     char* t=(char*)malloc(100*sizeof(char));
@@ -474,7 +484,11 @@ void subs_to_user(int i){
             break;
         }
     }
+    
+    printf("%s\n",t);
     strcpy(msg,t);
+    strcat(msg,"\n");
+
     wysylanie(i);
 }
 
@@ -508,7 +522,7 @@ int main(int argc, char **argv){
             int czy_zalogowany;
             czyszczenie();
             odczyt(cfd,'\n');
-            printf("%s",msg);
+            
             wczytaj_uzytkownikow();
             if(msg[0]=='1'){
 	            czy_zalogowany=zaloguj(cfd);
@@ -539,7 +553,7 @@ int main(int argc, char **argv){
 	        while(czy_zalogowany){   
                 
 	            odczyt(cfd, '\n') == 0;
-                //printf("%s\n",msg);
+                printf("%s\n",msg);
                 
                 if(strcmp("subskrybuj\n", msg) == 0){
                     //blokowanie pisanie do tego samego pliku w tym samym momencie
