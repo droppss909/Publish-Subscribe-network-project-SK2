@@ -119,7 +119,6 @@ def logowanie(soc, uzytkownik, server_message):
     server_message.configure(state=DISABLED)
     if resp2 == b'nie zalogowano\n':
         quit()
-    return uzytkownik  # [5
 
 
 def rejestracja(soc, login, server_message):
@@ -134,7 +133,6 @@ def rejestracja(soc, login, server_message):
     server_message.configure(state=NORMAL)
     server_message.insert(INSERT, response)
     server_message.configure(state=DISABLED)
-    return login
 
 
 def subskrybcja(soc, u, sub, server_message):
