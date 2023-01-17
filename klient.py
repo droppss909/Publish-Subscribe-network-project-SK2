@@ -152,7 +152,7 @@ def subskrybcja(soc, u, sub, server_message):
     sub = sub.get() + '\n'
     soc.send(sub.encode())
     if_add = recv_data_only_one(soc)
-    if if_add == b"1":
+    if if_add == '1':
         server_message.configure(state=NORMAL)
         server_message.insert(INSERT, "dodano pomyslnie\n")
         server_message.configure(state=DISABLED)
