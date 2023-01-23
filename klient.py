@@ -46,11 +46,11 @@ def login_ui(soc, r, server_message):
     logging_box.place(x=50, y=0)
 
     log_in_button = Button(r, text='CONFIRM', width=10, height=1, bg='#90ee90',
-                           command=lambda: [logowanie(soc, login, server_message), get_user(login)])
+                           command=lambda: [login_logic(soc, login, server_message), get_user(login)])
     log_in_button.place(x=70, y=25)
 
 
-def register_ui(soc, r, server_message):
+def register_ui(soc, r):
     register_login = StringVar()
 
     register_label = Label(r, text='REGISTER')
@@ -61,7 +61,7 @@ def register_ui(soc, r, server_message):
     register_box.place(x=370, y=0)
 
     register_button = Button(r, text='CONFIRM', width=10, height=1, bg='#90ee90',
-                             command=lambda: [rejestracja(soc, register_login, server_message),
+                             command=lambda: [registration_logic(soc, register_login),
                                               get_user(register_login)])
     register_button.place(x=380, y=25)
 
@@ -77,8 +77,8 @@ def subscription_ui(soc, r, server_message):
     subscription_box.place(x=800, y=0)
 
     subscription_button = Button(r, text='CONFIRM', width=10, height=1, bg='#90ee90',
-                                 command=lambda: subskrybcja(soc, current_username, subscription_username,
-                                                             server_message))
+                                 command=lambda: subscription_logic(soc, current_username, subscription_username,
+                                                                    server_message))
     subscription_button.place(x=800, y=25)
 
 
@@ -102,7 +102,7 @@ def server_message_ui(r):
     return server_message
 
 
-def message_box_ui(soc, r, server_message):
+def message_box_ui(soc, r):
     message_label = Label(r, text='MESSAGE')
 
     message_box = ScrolledText(r, width=80, height=19)
@@ -111,8 +111,7 @@ def message_box_ui(soc, r, server_message):
     message_box.place(x=5, y=330)
 
     message_button = Button(r, text='SEND', width=10, height=1, bg='#90ee90',
-                            command=lambda: dodaj_wpis(soc, current_username, message_box.get('1.0', 'end-1c'),
-                                                       server_message))
+                            command=lambda: message_logic(soc, current_username, message_box.get('1.0', 'end-1c')))
     message_button.place(x=280, y=670)
 
 
@@ -128,14 +127,14 @@ def news_feed_ui(soc, r):
     news_feed.configure(state=DISABLED)
 
     news_feed_button = Button(r, text='UPDATE', width=10, height=1, bg='#90ee90',
-                              command=lambda: pokaz_wpisy(soc, current_username, news_feed))
+                              command=lambda: news_feed_logic(soc, current_username, news_feed))
     news_feed_button.place(x=950, y=670)
 
 
-def logowanie(soc, uzytkownik, server_message):
+def login_logic(soc, user, server_message):
     soc.send('1\n'.encode())
-    uzytkownik = uzytkownik.get() + '\n'
-    soc.send(uzytkownik.encode())
+    user = user.get() + '\n'
+    soc.send(user.encode())
     resp2 = recv_data_only_one(soc)
     messagebox.showinfo("SERVER MESSAGE", resp2)
     server_message.configure(state=NORMAL)
@@ -145,7 +144,7 @@ def logowanie(soc, uzytkownik, server_message):
         quit()
 
 
-def rejestracja(soc, login, server_message):
+def registration_logic(soc, login):
     soc.send('2\n'.encode())
     login = login.get() + '\n'
     soc.send(login.encode())
@@ -153,7 +152,7 @@ def rejestracja(soc, login, server_message):
     messagebox.showinfo("SERVER MESSAGE", response)
 
 
-def subskrybcja(soc, u, sub, server_message):
+def subscription_logic(soc, u, sub, server_message):
     soc.send('subskrybuj\n'.encode())
     time.sleep(1)
 
@@ -185,7 +184,7 @@ def show_subscriptions(soc, u, server_message):
     server_message.configure(state=DISABLED)
 
 
-def dodaj_wpis(soc, u, wpis, server_message):
+def message_logic(soc, u, wpis):
     soc.send('dodaj\n'.encode())
     time.sleep(1)
 
@@ -198,7 +197,7 @@ def dodaj_wpis(soc, u, wpis, server_message):
     soc.send(wpis.encode())
 
 
-def pokaz_wpisy(soc, u, news_feed):
+def news_feed_logic(soc, u, news_feed):
     soc.send('wpisy\n'.encode())
     time.sleep(1)
 
@@ -235,13 +234,13 @@ if __name__ == '__main__':
 
     login_ui(s, root, sm)
 
-    register_ui(s, root, sm)
+    register_ui(s, root)
 
     subscription_ui(s, root, sm)
 
     show_subscriptions_ui(s, root, sm)
 
-    message_box_ui(s, root, sm)
+    message_box_ui(s, root)
 
     news_feed_ui(s, root)
 
