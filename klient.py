@@ -245,7 +245,7 @@ def exit_handler(soc):
 if __name__ == '__main__':
     proto = socket.getprotobyname('tcp')  # [1]
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, proto)
-    s.connect(("127.0.0.1", 1234))
+    s.connect((sys.argv[1], 1234))
     resp = recv_data_only_one(s)
 
     root = Tk()
