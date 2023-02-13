@@ -5,9 +5,11 @@ from tkinter import *
 from tkinter import messagebox
 from tkinter.scrolledtext import ScrolledText
 
+# globalna zmienna, która przechowuje nazwe aktualnego uzytkownika
 current_username = ""
 
 
+# funkcja rozszyfrowujaca pojedyncze znaki wiadomosci otrzymanej od serwera
 def recv_data_only_one(client_socket):
     data = ""
 
@@ -19,6 +21,7 @@ def recv_data_only_one(client_socket):
             return data
 
 
+# funkcja sluzaca do rozszyfrtowywania wiadomosci wysylanych przez subskrybowanych uzytkownikow
 def recv_data_messages(client_socket, len_serv):
     data = ""
 
@@ -30,11 +33,13 @@ def recv_data_messages(client_socket, len_serv):
             return data
 
 
+# funkcja inicjujaca okno interfejsu graficznego
 def init_window(r):
     r.geometry('1400x700')
     r.title("Client")
 
 
+# zbior funkcji konczacych sie znakami "_ui", ktore tworza elementy interfejsu graficznego klienta
 def login_ui(soc, r, server_message):
     login = StringVar()
 
@@ -102,7 +107,7 @@ def server_message_ui(r):
     return server_message
 
 
-def message_box_ui(soc, r):
+def message_box_ui(soc, r, server_message):
     message_label = Label(r, text='MESSAGE')
 
     message_box = ScrolledText(r, width=80, height=19)
@@ -111,7 +116,8 @@ def message_box_ui(soc, r):
     message_box.place(x=5, y=330)
 
     message_button = Button(r, text='SEND', width=10, height=1, bg='#90ee90',
-                            command=lambda: message_logic(soc, current_username, message_box.get('1.0', 'end-1c')))
+                            command=lambda: message_logic(soc, current_username, message_box.get('1.0', 'end-1c'),
+                                                          server_message))
     message_button.place(x=280, y=670)
 
 
@@ -131,6 +137,7 @@ def news_feed_ui(soc, r):
     news_feed_button.place(x=950, y=670)
 
 
+# zbior funkcji wykorzystywanych do komunikacji z serwerem dla poszczegolnych elementow interfejsu graficznego klienta
 def login_logic(soc, user, server_message):
     soc.send('1\n'.encode())
     user = user.get() + '\n'
@@ -179,12 +186,13 @@ def show_subscriptions(soc, u, server_message):
     u = u + '\n'
     soc.send(u.encode())
     response = recv_data_only_one(soc)
+    response = response + "\n"
     server_message.configure(state=NORMAL)
     server_message.insert(INSERT, response)
     server_message.configure(state=DISABLED)
 
 
-def message_logic(soc, u, wpis):
+def message_logic(soc, u, wpis, server_message):
     soc.send('dodaj\n'.encode())
     time.sleep(1)
 
@@ -195,6 +203,11 @@ def message_logic(soc, u, wpis):
     wpis = "-" + wpis + "\n"
 
     soc.send(wpis.encode())
+    response = recv_data_only_one(soc)
+    response = response + "\n"
+    server_message.configure(state=NORMAL)
+    server_message.insert(INSERT, response)
+    server_message.configure(state=DISABLED)
 
 
 def news_feed_logic(soc, u, news_feed):
@@ -204,22 +217,31 @@ def news_feed_logic(soc, u, news_feed):
     u = u + '\n'
     soc.send(u.encode())
     amount = recv_data_only_one(soc)
-    response = recv_data_messages(soc, int(amount))
-    news_feed.configure(state=NORMAL)
-    news_feed.delete('1.0', END)
-    news_feed.insert(INSERT, response)
-    news_feed.configure(state=DISABLED)
+    if int(amount) <= 0:
+        news_feed.configure(state=NORMAL)
+        news_feed.delete('1.0', END)
+        news_feed.insert(INSERT, "nie masz wpisow\n")
+        news_feed.configure(state=DISABLED)
+    else:
+        response = recv_data_messages(soc, int(amount))
+        news_feed.configure(state=NORMAL)
+        news_feed.delete('1.0', END)
+        news_feed.insert(INSERT, response)
+        news_feed.configure(state=DISABLED)
 
 
+# funkcja zmieniajaca globalna zmienna, ktora zawiera nazwe aktualnego uzytkownika
 def get_user(username):
     global current_username
     current_username = username.get()
 
 
+# funkcja informujaca serwer o tym, ze uzytkownik sie rozlaczyl
 def exit_handler(soc):
     soc.send("koniec\n".encode())
 
 
+# glowna funkcja programu, ktora nawiazuje polaczenie z serwerem oraz uruchamia pozostale funkcje tworzace program
 if __name__ == '__main__':
     proto = socket.getprotobyname('tcp')  # [1]
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, proto)
@@ -240,7 +262,7 @@ if __name__ == '__main__':
 
     show_subscriptions_ui(s, root, sm)
 
-    message_box_ui(s, root)
+    message_box_ui(s, root, sm)
 
     news_feed_ui(s, root)
 
